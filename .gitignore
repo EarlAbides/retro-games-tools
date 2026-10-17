@@ -7,3 +7,6 @@ Desktop.ini
 .DS_Store
 .vscode/
 *.swp
+
+# Star map personal notes (kept locally; use Export in the app to back up)
+starmap/starmap-notes.json*

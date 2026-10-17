@@ -7,6 +7,7 @@ PCs, specifically the GOG Galaxy release running under DOSBox.
 
 | Tool | Description |
 |------|-------------|
+| [starmap](starmap/) | Interactive starmap: zoom, layers, visited stars, notes, and encounter markers. |
 | [save-manager](save-manager/) | Back up and restore named game-state snapshots (GUI + command line). |
 
 ## Reference material
