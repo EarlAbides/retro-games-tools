@@ -3,10 +3,11 @@
   --space: #0b0b0d;
   --paper: #ffffff;
   --grid: #a9d6ee;
-  --nebula: #f75993;
+  --nebula: #a8e0d2;       /* pale green-blue, closer to the game's green nebula clouds */
   --ink: #2a2a2a;
   --flux: #6a2c94;
   --poster-pink: #e0307e;
+  --direction: #8a2dff;    /* UPSPIN / DOWNSPIN / OUTWARD / COREWARD (runner-up: #00b4ff) */
   --poster-teal: #2bb3a6;
   --start-arrow: #854f9f;   /* the fan map's purple "you start here" arrow */
 
@@ -113,7 +114,7 @@ body {
 #layer-axes text.tick-x { text-anchor: middle; }
 #layer-axes text.tick-y { text-anchor: end; dominant-baseline: middle; }
 #layer-axes text.dir {
-  fill: var(--poster-pink); font: italic 900 9px "Segoe UI", sans-serif; letter-spacing: 0.6px; text-anchor: middle;
+  fill: var(--direction); font: italic 900 9px "Segoe UI", sans-serif; letter-spacing: 0.6px; text-anchor: middle;
 }
 #layer-axes rect.frame { fill: none; stroke: var(--poster-teal); stroke-width: 1.5px; vector-effect: non-scaling-stroke; }
 
