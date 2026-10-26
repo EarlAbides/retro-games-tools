@@ -6,7 +6,7 @@ remake), GOG Galaxy release.
 | Tool | Description |
 |------|-------------|
 | [save-manager](save-manager/) | Back up and restore characters, with stats shown (GUI + command line). |
-| [maps](maps/) | Render the overworld, towns and castles to PNG from the game files. |
+| [maps](maps/) | Interactive overworld map in your browser: every place named, where your characters are, town layouts and notes. Also exports the maps to PNG. |
 
 ## Reference card
 

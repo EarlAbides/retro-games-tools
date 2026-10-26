@@ -13,3 +13,6 @@ starflight/starmap/starmap-notes.json*
 
 # Ultima 1 maps rendered from the game's own art (run Export-Maps.ps1)
 ultima1/maps/out/
+
+# Ultima 1 map personal notes (kept locally; use Export in the app to back up)
+ultima1/maps/map-notes.json*

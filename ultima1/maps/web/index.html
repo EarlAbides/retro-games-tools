@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ultima I Map</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Crect width=%2216%22 height=%2216%22 fill=%22%230000aa%22/%3E%3Cpath d=%22M3 13V5h10v8z%22 fill=%22%2300aa00%22/%3E%3Cpath d=%22M6 13V8h4v5z%22 fill=%22%23aa5500%22/%3E%3Cpath d=%22M3 5l5-3 5 3z%22 fill=%22%23ffff55%22/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="map-wrap">
+    <canvas id="map" aria-label="Ultima 1 overworld map"></canvas>
+    <div id="tooltip" hidden></div>
+    <div id="zoom-controls">
+      <button id="zoom-in" title="Zoom in (+)">+</button>
+      <button id="zoom-out" title="Zoom out (-)">&minus;</button>
+      <button id="zoom-fit" title="Fit map (0)">&#x2922;</button>
+    </div>
+    <div id="statusbar">
+      <span id="cursor-pos">&nbsp;</span>
+      <span id="save-status"></span>
+    </div>
+    <div id="load-error" hidden></div>
+  </main>
+
+  <aside id="sidebar">
+    <header>
+      <h1>Ultima I</h1>
+      <input id="search" type="search" placeholder="Find a place... ( / )" autocomplete="off">
+    </header>
+
+    <section class="panel">
+      <h2>Characters <button id="refresh-chars" class="small" title="Reread the save files">Refresh</button></h2>
+      <ul id="characters" class="list"></ul>
+    </section>
+
+    <section id="inspector" class="panel">
+      <p class="empty">Click a town, castle, landmark or dungeon. Drag to move, scroll to zoom.</p>
+    </section>
+
+    <details class="panel" open>
+      <summary>Layers</summary>
+      <div id="layer-toggles" class="toggles"></div>
+    </details>
+
+    <details class="panel" open>
+      <summary>Places</summary>
+      <ul id="places" class="list"></ul>
+    </details>
+
+    <details class="panel">
+      <summary>General notes</summary>
+      <textarea id="general-notes" rows="8" placeholder="Quests, prices, anything not tied to one place..."></textarea>
+    </details>
+
+    <footer>
+      <button id="export">Export notes</button>
+      <label class="button">Import<input id="import" type="file" accept=".json,application/json" hidden></label>
+    </footer>
+  </aside>
+
+  <dialog id="layout-dialog">
+    <header><h2 id="layout-title"></h2><button id="layout-close" title="Close (Esc)">&times;</button></header>
+    <canvas id="layout-big"></canvas>
+    <p class="hint">The game fills in shopkeepers, guards and townsfolk when you enter. Letters spell out the shop signs.</p>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
