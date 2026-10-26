@@ -1,4 +1,4 @@
-# Local reference material (maps, manuals, etc.) - not redistributable
+# Per-game local reference material (maps, manuals, etc.) - not redistributable
 reference/
 
 # OS / editor cruft
@@ -9,4 +9,4 @@ Desktop.ini
 *.swp
 
 # Star map personal notes (kept locally; use Export in the app to back up)
-starmap/starmap-notes.json*
+starflight/starmap/starmap-notes.json*

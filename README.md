@@ -1,19 +1,19 @@
-# Starflight Tools
+# Retro Games Tools
 
-Tools for playing *Starflight* (Binary Systems / Electronic Arts, 1986) on modern
-PCs, specifically the GOG Galaxy release running under DOSBox.
+Tools for playing classic DOS games on modern PCs, specifically the GOG Galaxy
+releases running under DOSBox.
 
-## Tools
+## Games
 
-| Tool | Description |
-|------|-------------|
-| [starmap](starmap/) | Interactive starmap: zoom, layers, visited stars, notes, and encounter markers. |
-| [save-manager](save-manager/) | Back up and restore named game-state snapshots (GUI + command line). |
+| Game | Tools |
+|------|-------|
+| [Starflight](starflight/) (1986) | [starmap](starflight/starmap/), [save-manager](starflight/save-manager/) |
 
 ## Reference material
 
-`reference/` is gitignored. It holds local copies of maps and other material
-used while building these tools, and that material isn't ours to redistribute.
+Each game folder can have a `reference/` folder, and it's gitignored. It holds
+local copies of maps and other material used while building these tools, and
+that material isn't ours to redistribute.
 
 ## License
 
