@@ -85,7 +85,9 @@ function Get-CurrentFingerprint {
 }
 
 function Test-DosBoxRunning {
-    [bool](Get-Process -Name 'DOSBox' -ErrorAction SilentlyContinue)
+    # Only a Starflight DOSBox counts; a process whose path we can't read is assumed to be ours.
+    [bool](Get-Process -Name 'DOSBox' -ErrorAction SilentlyContinue |
+        Where-Object { -not $_.Path -or $_.Path.StartsWith($Root.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase) })
 }
 
 function Test-SlotName([string]$Name) {
@@ -149,7 +151,10 @@ function Restore-Backup([string]$Dir) {
     }
 
     New-Item -ItemType Directory -Path $PlayDir -Force | Out-Null
-    Get-ChildItem -Path $Dir -Filter '*.COM' -File | ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination $PlayDir -Force }
+    # Stamp them as new: Copy-Item keeps the backup's old times, and GOG Galaxy's cloud sync could treat its copy as newer.
+    $now = Get-Date
+    Get-ChildItem -Path $Dir -Filter '*.COM' -File |
+        ForEach-Object { (Copy-Item -LiteralPath $_.FullName -Destination $PlayDir -Force -PassThru).LastWriteTime = $now }
     $auto
 }
 

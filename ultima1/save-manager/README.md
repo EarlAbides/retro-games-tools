@@ -10,10 +10,18 @@ overlay on the install folder). Backups go to
 `cloud_saves\BACKUPS\<character name>\<timestamp>\PLAYERn.U1`, and a restore
 puts the file back into the `PLAYERn.U1` it came from.
 
+GOG Galaxy syncs `cloud_saves` (backups included) with its cloud: before
+launch it restores anything missing locally. To delete a character or backup for
+good, delete it while the game is running, so Galaxy records the deletion when
+you quit. Restored files are stamped with the current time so the sync treats
+them as the newest copy.
+
 ## Usage
 
 Double-click **`Ultima 1 Saves.bat`** to open the GUI. It lists the characters on
-disk with their stats, and the backups grouped by character. Or use the command line:
+disk with their stats, and the backups grouped by character. Double-click a
+character (or use **Character Sheet**) for a full sheet with attributes and
+inventory; **View Character** shows the same for a backup. Or use the command line:
 
 ```
 "Ultima 1 Saves.bat" -Backup  [-Player 1] [-Note "before Mondain"]
@@ -41,10 +49,17 @@ and the fields after it are little-endian 16-bit words:
 | 0x24 | Coin |
 | 0x26 | Experience |
 | 0x28 | Food |
+| 0x2A, 0x2C, 0x2E | Readied weapon, spell, armour (index into each table) |
 | 0x34, 0x36 | Map position X, Y (inferred) |
+| 0x54 | Armour counts: Skin, Leather, Chain, Plate, Vacuum suit, Reflect suit |
+| 0x60 | Weapon counts: Hands, Dagger .. Blaster, 16 in the game's order |
+| 0x80 | Spell counts: Prayer, Open .. Kill, 11 |
+| 0x96 | Transport counts: Foot, Horse .. Time Machine, 8 |
 
-Race through food are confirmed against the in-game display. The rest of the
-record (inventory, nearby monsters) isn't decoded yet.
+Everything except the map position is confirmed against the in-game display
+(including Ztats for the inventory). In the inventory tables
+the first item (Skin, Hands, Prayer, Foot) is stored as FFFF, meaning always
+owned. Nearby monsters are stored from about 0xC4 and aren't decoded.
 
 ## Finding the game
 
