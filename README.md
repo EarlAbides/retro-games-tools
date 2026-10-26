@@ -8,6 +8,7 @@ releases running under DOSBox.
 | Game | Tools |
 |------|-------|
 | [Starflight](starflight/) (1986) | [starmap](starflight/starmap/), [save-manager](starflight/save-manager/) |
+| [Ultima 1](ultima1/) (1986) | [save-manager](ultima1/save-manager/) |
 
 ## Reference material
 

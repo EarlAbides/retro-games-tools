@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ultima I Reference Card</title>
+<style>
+  :root {
+    --paper: #f4ecd8;
+    --ink: #2b2118;
+    --muted: #6b5a45;
+    --rule: #b9a27a;
+    --accent: #8b1e1e;
+    --key-bg: #fffaf0;
+    --key-edge: #8a7553;
+    --panel: #ece1c6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #1d1813; --ink: #eadfc8; --muted: #b3a283; --rule: #5c4d38;
+      --accent: #e0765f; --key-bg: #2c251d; --key-edge: #8a7553; --panel: #26201a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #1d1813; --ink: #eadfc8; --muted: #b3a283; --rule: #5c4d38;
+    --accent: #e0765f; --key-bg: #2c251d; --key-edge: #8a7553; --panel: #26201a;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font: 14px/1.4 "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  }
+  .card { max-width: 1040px; margin: 0 auto; padding: 24px 16px 32px; }
+
+  header { text-align: center; border-bottom: 3px double var(--rule); padding-bottom: 10px; margin-bottom: 14px; }
+  h1 { margin: 0; font-size: 30px; letter-spacing: .12em; font-variant: small-caps; color: var(--accent); }
+  .sub { margin: 2px 0 0; color: var(--muted); font-style: italic; }
+
+  .grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 18px; }
+  @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+
+  h2 {
+    margin: 0 0 6px; font-size: 15px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--accent); border-bottom: 1px solid var(--rule); padding-bottom: 2px;
+  }
+  section { margin-bottom: 14px; break-inside: avoid; }
+
+  kbd {
+    display: inline-block; min-width: 1.7em; padding: 0 .35em; text-align: center;
+    font: bold 13px/1.55 Consolas, "Courier New", monospace;
+    background: var(--key-bg); color: var(--ink);
+    border: 1px solid var(--key-edge); border-bottom-width: 3px; border-radius: 4px;
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+  td { padding: 2px 4px; vertical-align: top; }
+  td:first-child { width: 2.4em; }
+  td.cmd { font-weight: bold; white-space: nowrap; width: 7.5em; }
+  td.note { color: var(--muted); }
+  tr + tr td { border-top: 1px dotted var(--rule); }
+  tr.star td.cmd { color: var(--accent); }
+
+  ol, ul { margin: 0; padding-left: 1.3em; }
+  li { margin: 2px 0; }
+  .panel { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 8px 12px; }
+  dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; }
+  dt { font-weight: bold; }
+  dd { margin: 0; color: var(--muted); }
+  .moves { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; align-items: center; }
+  footer { margin-top: 6px; text-align: center; color: var(--muted); font-size: 12px; font-style: italic; }
+
+  @media print {
+    @page { size: letter; margin: 0.4in; }
+    :root, :root[data-theme] {
+      --paper: #fff; --ink: #000; --muted: #333; --rule: #999; --accent: #7a1010;
+      --key-bg: #fff; --key-edge: #555; --panel: #f3f3f3;
+    }
+    body { font-size: 11.5px; }
+    .card { padding: 0; max-width: none; }
+    h1 { font-size: 24px; }
+    .grid { grid-template-columns: 1.15fr 1fr; gap: 14px; }
+    kbd { font-size: 11px; }
+    section { margin-bottom: 9px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <header>
+    <h1>Ultima I &middot; The First Age of Darkness</h1>
+    <p class="sub">Command Reference Card &mdash; PC edition (1986)</p>
+  </header>
+
+  <div class="grid">
+    <div>
+      <section>
+        <h2>Commands</h2>
+        <table>
+          <tr><td><kbd>A</kbd></td><td class="cmd">Attack</td><td class="note">with the readied weapon, then pick a direction</td></tr>
+          <tr><td><kbd>B</kbd></td><td class="cmd">Board</td><td class="note">mount a horse, cart, raft, frigate, aircar&hellip;</td></tr>
+          <tr><td><kbd>C</kbd></td><td class="cmd">Cast</td><td class="note">cast the readied spell</td></tr>
+          <tr><td><kbd>D</kbd></td><td class="cmd">Drop</td><td class="note">pence, weapon or armour</td></tr>
+          <tr><td><kbd>E</kbd></td><td class="cmd">Enter</td><td class="note">town, castle, dungeon, signpost, landmark</td></tr>
+          <tr><td><kbd>F</kbd></td><td class="cmd">Fire</td><td class="note">a vehicle's weapons</td></tr>
+          <tr><td><kbd>G</kbd></td><td class="cmd">Get</td><td class="note">take an item or open a chest</td></tr>
+          <tr><td><kbd>H</kbd></td><td class="cmd">HyperJump</td><td class="note">in space only</td></tr>
+          <tr><td><kbd>I</kbd></td><td class="cmd">Inform</td><td class="note">and search: where am I?</td></tr>
+          <tr><td><kbd>K</kbd></td><td class="cmd">K-limb</td><td class="note">a dungeon ladder; face it first</td></tr>
+          <tr><td><kbd>N</kbd></td><td class="cmd">Noise</td><td class="note">sound on / off</td></tr>
+          <tr><td><kbd>O</kbd></td><td class="cmd">Open</td><td class="note">a door or coffin</td></tr>
+          <tr class="star"><td><kbd>Q</kbd></td><td class="cmd">Quit &amp; save</td><td class="note">saves the game; <b>outdoors only</b></td></tr>
+          <tr class="star"><td><kbd>R</kbd></td><td class="cmd">Ready</td><td class="note">equip a <b>W</b>eapon, <b>A</b>rmour or <b>S</b>pell &mdash; buying isn't enough!</td></tr>
+          <tr><td><kbd>S</kbd></td><td class="cmd">Steal</td><td class="note">from a shop; get caught and the guards attack</td></tr>
+          <tr><td><kbd>T</kbd></td><td class="cmd">Transact</td><td class="note">buy / sell at a counter; talk to a king</td></tr>
+          <tr><td><kbd>U</kbd></td><td class="cmd">Unlock</td><td class="note">needs a key</td></tr>
+          <tr><td><kbd>V</kbd></td><td class="cmd">View</td><td class="note">change view in a vehicle</td></tr>
+          <tr><td><kbd>X</kbd></td><td class="cmd">X-it</td><td class="note">leave a vehicle or dismount</td></tr>
+          <tr class="star"><td><kbd>Z</kbd></td><td class="cmd">Ztats</td><td class="note">stats &amp; inventory &mdash; check what's readied</td></tr>
+          <tr><td><kbd>&#9251;</kbd></td><td class="cmd">Pass</td><td class="note">space bar: wait one turn</td></tr>
+        </table>
+      </section>
+
+      <section>
+        <h2>Moving</h2>
+        <div class="moves">
+          <span><kbd>&uarr;</kbd><kbd>&darr;</kbd><kbd>&larr;</kbd><kbd>&rarr;</kbd></span><span>Outdoors &amp; in towns: north / south / west / east</span>
+          <span><kbd>&uarr;</kbd></span><span>In dungeons: forward</span>
+          <span><kbd>&larr;</kbd><kbd>&rarr;</kbd></span><span>In dungeons: turn left / right</span>
+          <span><kbd>&darr;</kbd></span><span>In dungeons: turn around</span>
+        </div>
+      </section>
+    </div>
+
+    <div>
+      <section>
+        <h2>Surviving the first hour</h2>
+        <div class="panel">
+          <ol>
+            <li><b>Z</b>tats. New characters start with <i>Hands</i> and <i>Skin</i>.</li>
+            <li>In town, <b>T</b>ransact at the weapon and armour shops.</li>
+            <li><b>R</b>eady the new weapon and armour.</li>
+            <li>Keep food up: grocers sell it in packs of 10.</li>
+            <li>At a castle, <b>T</b>ransact with the king and offer pence for <b>hit points</b>.</li>
+            <li>Fight near home until you're stronger; read the signposts.</li>
+            <li><b>Q</b> to save outdoors, then back up in the save manager.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section>
+        <h2>Status line</h2>
+        <dl>
+          <dt>Hits</dt><dd>hit points; at zero, you die</dd>
+          <dt>Food</dt><dd>eaten as you travel; don't run out</dd>
+          <dt>Exp.</dt><dd>experience from kills</dd>
+          <dt>Coin</dt><dd>copper pence, silver pieces, gold crowns</dd>
+        </dl>
+      </section>
+
+      <section>
+        <h2>Gear</h2>
+        <dl>
+          <dt>Weapons</dt><dd>Dagger, Mace, Axe, Rope &amp; Spikes, Sword, Great Sword, Bow &amp; Arrows, Amulet, Wand, Staff, Triangle, Pistol, Light Sword, Phazor, Blaster</dd>
+          <dt>Armour</dt><dd>Leather armor, Chain mail, Plate mail, Vacuum suit, Reflect suit</dd>
+          <dt>Spells</dt><dd>Prayer, Open, Unlock, Magic Missile, Steal, Ladder Down, Ladder Up, Blink, Create, Destroy, Kill</dd>
+          <dt>Transport</dt><dd>Horse, Cart, Raft, Frigate, Aircar, Shuttle, Time Machine</dd>
+        </dl>
+      </section>
+
+      <section>
+        <h2>The quest</h2>
+        <p style="margin:0">Destroy Mondain's evil gem. The four lands are those <i>of Lord British</i>, <i>of the Feudal Lords</i>, <i>of the Dark Unknown</i> and <i>of Danger and Despair</i>. Kings set quests &mdash; slay a monster or visit a landmark &mdash; and reward them; four gems (red, green, blue, white) matter in the end. Rescuing a princess grants hit points, pence and experience.</p>
+      </section>
+    </div>
+  </div>
+
+  <footer>Compiled from the game's own text &middot; retro-games-tools</footer>
+</div>
+</body>
+</html>
