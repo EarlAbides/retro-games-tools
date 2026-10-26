@@ -70,7 +70,7 @@ $ItemTables = @(
 
 function Read-Character([string]$Path) {
     # PLAYERn.U1 is an 820-byte flat record of little-endian 16-bit words after a 16-byte name.
-    # Everything here is confirmed against the in-game display (Ztats for inventory) except X/Y.
+    # Everything here is confirmed in game (Ztats for inventory; X/Y against the overworld map).
     # Readied items: 0x2A weapon, 0x2C spell, 0x2E armour, each an index into its table.
     $b = [IO.File]::ReadAllBytes($Path)
     if ($b.Length -lt 0x2A) { return $null }
@@ -476,10 +476,12 @@ function Show-CharacterSheet($Info, [string]$Source) {
 
     # vitals tiles
     $tiles = New-Object System.Windows.Forms.TableLayoutPanel
-    $tiles.ColumnCount = 4; $tiles.RowCount = 1; $tiles.AutoSize = $true
+    # level = exp / 1000 + 1 (the games' own level routine, e.g. OUT.EXE 0xBB45)
+    $level = [math]::Floor($Info.Exp / 1000) + 1
+    $tiles.ColumnCount = 5; $tiles.RowCount = 1; $tiles.AutoSize = $true
     $tiles.Margin = New-Object System.Windows.Forms.Padding(0, 10, 0, 6)
-    foreach ($v in @(@('Hits', $Info.Hits), @('Food', $Info.Food), @('Exp.', $Info.Exp), @('Coin', $Info.Coin))) {
-        [void]$tiles.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle('Percent', 25)))
+    foreach ($v in @(@('Level', $level), @('Hits', $Info.Hits), @('Food', $Info.Food), @('Exp.', $Info.Exp), @('Coin', $Info.Coin))) {
+        [void]$tiles.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle('Percent', 20)))
         $p = New-Object System.Windows.Forms.TableLayoutPanel
         $p.ColumnCount = 1; $p.RowCount = 2; $p.AutoSize = $true; $p.Dock = 'Fill'
         $p.BackColor = [System.Drawing.Color]::FromArgb(244, 236, 216); $p.Margin = New-Object System.Windows.Forms.Padding(3)
@@ -491,6 +493,19 @@ function Show-CharacterSheet($Info, [string]$Source) {
         [void]$tiles.Controls.Add($p)
     }
     Add-Row $tiles
+
+    # progress to next level
+    $next = New-Object System.Windows.Forms.TableLayoutPanel
+    $next.ColumnCount = 2; $next.RowCount = 1; $next.AutoSize = $true
+    $next.Margin = New-Object System.Windows.Forms.Padding(3, 0, 3, 8)
+    [void]$next.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle('Percent', 100)))
+    [void]$next.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle('AutoSize')))
+    $lvlBar = New-Object System.Windows.Forms.ProgressBar
+    $lvlBar.Maximum = 1000; $lvlBar.Value = $Info.Exp % 1000; $lvlBar.Height = 14; $lvlBar.Anchor = 'Left, Right'
+    $toGo = New-SheetLabel ('{0} exp to level {1}' -f (1000 - $Info.Exp % 1000), ($level + 1)) $font ([System.Drawing.SystemColors]::GrayText)
+    $toGo.Anchor = 'Right'
+    $next.Controls.AddRange(@($lvlBar, $toGo))
+    Add-Row $next
 
     # attributes with bars
     $grpStats = New-Object System.Windows.Forms.GroupBox

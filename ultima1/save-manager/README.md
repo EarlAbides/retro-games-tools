@@ -47,16 +47,16 @@ and the fields after it are little-endian 16-bit words:
 | 0x16 | Hit points |
 | 0x18-0x22 | Strength, Agility, Stamina, Charisma, Wisdom, Intelligence |
 | 0x24 | Coin |
-| 0x26 | Experience |
+| 0x26 | Experience (level = exp / 1000 + 1, rounded down: the games' own level routine, e.g. `OUT.EXE` 0xBB45) |
 | 0x28 | Food |
 | 0x2A, 0x2C, 0x2E | Readied weapon, spell, armour (index into each table) |
-| 0x34, 0x36 | Map position X, Y (inferred) |
+| 0x34, 0x36 | Map position X, Y (overworld tile, see [maps](../maps/)) |
 | 0x54 | Armour counts: Skin, Leather, Chain, Plate, Vacuum suit, Reflect suit |
 | 0x60 | Weapon counts: Hands, Dagger .. Blaster, 16 in the game's order |
 | 0x80 | Spell counts: Prayer, Open .. Kill, 11 |
 | 0x96 | Transport counts: Foot, Horse .. Time Machine, 8 |
 
-Everything except the map position is confirmed against the in-game display
+Everything here is confirmed against the game
 (including Ztats for the inventory). In the inventory tables
 the first item (Skin, Hands, Prayer, Foot) is stored as FFFF, meaning always
 owned. Nearby monsters are stored from about 0xC4 and aren't decoded.

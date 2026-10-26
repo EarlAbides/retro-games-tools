@@ -10,3 +10,6 @@ Desktop.ini
 
 # Star map personal notes (kept locally; use Export in the app to back up)
 starflight/starmap/starmap-notes.json*
+
+# Ultima 1 maps rendered from the game's own art (run Export-Maps.ps1)
+ultima1/maps/out/
