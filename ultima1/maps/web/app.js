@@ -15,6 +15,9 @@ const TERRAIN = ['Water', 'Grass', 'Forest', 'Mountains', 'Castle', 'Landmark', 
 const LANDS = ['of Lord British', 'of the Feudal Lords', 'of the Dark Unknown', 'of Danger and Despair'];
 const landName = (i) => `The Lands ${LANDS[i]}`;
 const landOf = (x, y) => 2 * (y > 77) + (x > 83);
+// Each land is one quadrant of the map, and the page shows one land at a time.
+const LW = 84, LH = 78;
+const landRect = (i) => ({ x0: (i % 2) * LW, y0: (i >> 1) * LH, x1: (i % 2) * LW + LW, y1: (i >> 1) * LH + LH });
 
 // min: the zoom (screen px per tile) at which that kind's labels appear
 // color: the label, and the place's dot on the zoomed-out map
@@ -33,7 +36,7 @@ const LAYERS = [
   ['castle', 'Castles'], ['town', 'Towns'],
   ['landmark', 'Landmarks'], ['dungeon', 'Dungeons'],
   ['characters', 'Characters'], ['visited', 'Visited marks'],
-  ['lands', 'Lands'], ['grid', 'Tile grid'],
+  ['grid', 'Tile grid'],
 ];
 const LAYER_DEFAULTS = { grid: false };
 
@@ -45,7 +48,8 @@ let places = [], byPos = new Map(), terrain, world, overview, townTiles, tcd;
 let characters = [];
 let notes = emptyNotes();
 let prefs = loadPrefs();
-let view = { cx: W / 2, cy: H / 2, s: 4 };   // s = screen px per tile
+let land = 0;                                 // the land on screen
+let view = { cx: LW / 2, cy: LH / 2, s: 4 };  // s = screen px per tile
 let fitScale = 4;
 let selection = null;                         // { type: 'place'|'char', id }
 let hover = null;                             // { x, y } tile under the mouse
@@ -83,7 +87,7 @@ const findChar = (slot) => characters.find((c) => c.slot === slot);
 const terrainAt = (x, y) => terrain[y * W + x];
 
 function loadPrefs() {
-  const base = { layers: {}, view: null };
+  const base = { layers: {}, land: null, views: {} };
   try { return Object.assign(base, JSON.parse(localStorage.getItem('u1-map-prefs')) || {}); }
   catch { return base; }
 }
@@ -183,21 +187,27 @@ function origin() {
 function tileAt(mx, my) {
   const { ox, oy } = origin();
   const x = Math.floor((mx - ox) / view.s), y = Math.floor((my - oy) / view.s);
-  return x >= 0 && y >= 0 && x < W && y < H ? { x, y } : null;
+  const r = landRect(land);
+  return x >= r.x0 && y >= r.y0 && x < r.x1 && y < r.y1 ? { x, y } : null;
 }
 
 function computeFit() {
   const { w, h } = size();
-  fitScale = Math.min(w / W, h / H) * 0.98;
+  fitScale = Math.min(w / LW, h / LH) * 0.98;
 }
 function clampView() {
+  const r = landRect(land);
   view.s = Math.min(64, Math.max(fitScale * 0.75, view.s));
-  view.cx = Math.min(W, Math.max(0, view.cx));
-  view.cy = Math.min(H, Math.max(0, view.cy));
+  view.cx = Math.min(r.x1, Math.max(r.x0, view.cx));
+  view.cy = Math.min(r.y1, Math.max(r.y0, view.cy));
+}
+function fitView() {
+  const r = landRect(land);
+  return { cx: r.x0 + LW / 2, cy: r.y0 + LH / 2, s: fitScale };
 }
 function fit() {
   computeFit();
-  view = { cx: W / 2, cy: H / 2, s: fitScale };
+  view = fitView();
   viewChanged();
 }
 
@@ -206,7 +216,31 @@ function viewChanged() {
   clampView();
   requestDraw();
   clearTimeout(viewSaveTimer);
-  viewSaveTimer = setTimeout(() => { prefs.view = view; savePrefs(); }, 400);
+  viewSaveTimer = setTimeout(() => { prefs.views[land] = view; savePrefs(); }, 400);
+}
+
+// Show another land, where you last left it (or fitted the first time).
+function setLand(i) {
+  if (i === land && view) { renderRealm(); return; }
+  cancelAnimationFrame(flight);
+  prefs.views[land] = view;
+  land = i;
+  prefs.land = i; savePrefs();
+  view = prefs.views[i] ? { ...prefs.views[i] } : fitView();
+  hover = null; $('#tooltip').hidden = true;
+  clampView();
+  renderRealm(); renderPlaces(); requestDraw();
+}
+
+function renderRealm() {
+  $('#realm-title').textContent = landName(land);
+  for (const b of document.querySelectorAll('#realm-tabs button')) {
+    const i = +b.dataset.land;
+    b.classList.toggle('current', i === land);
+    const here = characters.filter((c) => landOf(c.x, c.y) === i).map((c) => c.name || `Player ${c.slot}`);
+    b.querySelector('.who').textContent = here.length ? '●' : '';
+    b.title = here.length ? `${landName(i)}: ${here.join(', ')} ${here.length > 1 ? 'are' : 'is'} here` : landName(i);
+  }
 }
 
 function zoomAt(mx, my, factor) {
@@ -222,6 +256,7 @@ function zoomAt(mx, my, factor) {
 
 let flight = null;
 function flyTo(x, y, s = Math.max(view.s, 16)) {
+  setLand(landOf(x, y));
   const from = { ...view }, to = { cx: x + 0.5, cy: y + 0.5, s };
   const start = performance.now(), ms = 450;
   cancelAnimationFrame(flight);
@@ -256,40 +291,45 @@ function draw() {
   ctx.fillRect(0, 0, w, h);
   if (!world) return;
 
-  const s = view.s, { ox, oy } = origin();
+  const s = view.s, { ox, oy } = origin(), r = landRect(land);
+  const here = places.filter((p) => p.land === land && layerOn(p.kind));
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(ox + r.x0 * s, oy + r.y0 * s, LW * s, LH * s);
+  ctx.clip();
+
   // The game's tiles are mostly black with dithered dots, so shrunk below about half size they
   // turn to noise or murk; zoomed out, draw flat terrain colors with a dot for each place instead.
   const tiles = s >= OVERVIEW_BELOW;
   ctx.imageSmoothingEnabled = tiles && s < TILE;
   ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(tiles ? world : overview, ox, oy, W * s, H * s);
-  if (!tiles) drawPlaceDots(ox, oy, s);
+  const k = tiles ? TILE : 1;
+  ctx.drawImage(tiles ? world : overview, r.x0 * k, r.y0 * k, LW * k, LH * k, ox + r.x0 * s, oy + r.y0 * s, LW * s, LH * s);
+  if (!tiles) drawPlaceDots(here, ox, oy, s);
 
   if (layerOn('grid') && s >= 8) {
     ctx.strokeStyle = 'rgba(0,0,0,0.22)'; ctx.lineWidth = 1;
     ctx.beginPath();
-    const x0 = Math.max(0, Math.floor(-ox / s)), x1 = Math.min(W, Math.ceil((w - ox) / s));
-    const y0 = Math.max(0, Math.floor(-oy / s)), y1 = Math.min(H, Math.ceil((h - oy) / s));
+    const x0 = Math.max(r.x0, Math.floor(-ox / s)), x1 = Math.min(r.x1, Math.ceil((w - ox) / s));
+    const y0 = Math.max(r.y0, Math.floor(-oy / s)), y1 = Math.min(r.y1, Math.ceil((h - oy) / s));
     for (let x = x0; x <= x1; x++) { ctx.moveTo(Math.round(ox + x * s) + 0.5, oy + y0 * s); ctx.lineTo(Math.round(ox + x * s) + 0.5, oy + y1 * s); }
     for (let y = y0; y <= y1; y++) { ctx.moveTo(ox + x0 * s, Math.round(oy + y * s) + 0.5); ctx.lineTo(ox + x1 * s, Math.round(oy + y * s) + 0.5); }
     ctx.stroke();
   }
 
-  if (layerOn('lands')) drawLands(ox, oy, s);
-
   if (layerOn('visited')) {
     ctx.strokeStyle = getCss('--visited'); ctx.lineWidth = 2;
-    for (const p of places) {
-      if (!isVisited(p) || !layerOn(p.kind)) continue;
-      ctx.strokeRect(ox + p.x * s - 1, oy + p.y * s - 1, s + 2, s + 2);
+    for (const p of here) {
+      if (isVisited(p)) ctx.strokeRect(ox + p.x * s - 1, oy + p.y * s - 1, s + 2, s + 2);
     }
   }
 
-  drawLabels(ox, oy, s);
+  drawLabels(here, ox, oy, s);
+  ctx.restore();
 
   if (selection) {
     const t = selection.type === 'place' ? findPlace(selection.id) : findChar(selection.id);
-    if (t) {
+    if (t && landOf(t.x, t.y) === land) {
       const pad = Math.max(3, s * 0.25);
       ctx.strokeStyle = getCss('--select'); ctx.lineWidth = 2;
       ctx.setLineDash([5, 4]);
@@ -306,11 +346,10 @@ function getCss(name) {
   return cssCache[name] ??= getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
 
-function drawPlaceDots(ox, oy, s) {
+function drawPlaceDots(list, ox, oy, s) {
   const r = Math.max(2, s * 0.45);
   ctx.lineWidth = 1; ctx.strokeStyle = '#000';
-  for (const p of places) {
-    if (!layerOn(p.kind)) continue;
+  for (const p of list) {
     ctx.fillStyle = KINDS[p.kind].color;
     ctx.beginPath();
     const x = ox + (p.x + 0.5) * s, y = oy + (p.y + 0.5) * s;
@@ -320,30 +359,7 @@ function drawPlaceDots(ox, oy, s) {
   }
 }
 
-function drawLands(ox, oy, s) {
-  ctx.save();
-  ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1.5; ctx.setLineDash([8, 6]);
-  ctx.beginPath();
-  ctx.moveTo(ox + 84 * s, oy); ctx.lineTo(ox + 84 * s, oy + H * s);
-  ctx.moveTo(ox, oy + 78 * s); ctx.lineTo(ox + W * s, oy + 78 * s);
-  ctx.stroke();
-  ctx.setLineDash([]);
-  if (s < 10) {
-    // in the strip of open sea along the top and bottom edges, clear of the place labels
-    const size = Math.max(13, Math.min(22, s * 3));
-    ctx.font = `italic 700 ${size}px "Palatino Linotype", "Book Antiqua", Palatino, serif`;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.lineJoin = 'round'; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,0.6)';
-    ctx.fillStyle = 'rgba(244,236,216,0.85)';
-    for (let i = 0; i < 4; i++) {
-      const x = ox + (i % 2 ? 0.75 : 0.25) * W * s, y = oy + (i < 2 ? 2.5 : H - 2.5) * s;
-      ctx.strokeText(landName(i), x, y); ctx.fillText(landName(i), x, y);
-    }
-  }
-  ctx.restore();
-}
-
-function drawLabels(ox, oy, s) {
+function drawLabels(here, ox, oy, s) {
   const { w, h } = size();
   const font = Math.round(Math.max(11, Math.min(15, 8 + s * 0.35)));
   ctx.font = `600 ${font}px "Segoe UI", system-ui, sans-serif`;
@@ -351,8 +367,8 @@ function drawLabels(ox, oy, s) {
   ctx.lineJoin = 'round'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,0.85)';
   const taken = [];
   const sel = selection && selection.type === 'place' ? selection.id : null;
-  const list = places
-    .filter((p) => layerOn(p.kind) && (s >= KINDS[p.kind].min || p.id === sel))
+  const list = here
+    .filter((p) => s >= KINDS[p.kind].min || p.id === sel)
     .sort((a, b) => (b.id === sel) - (a.id === sel) || KINDS[a.kind].order - KINDS[b.kind].order);
   for (const p of list) {
     const x = ox + (p.x + 0.5) * s, y = oy + (p.y + 1) * s + 2;
@@ -369,6 +385,7 @@ function drawLabels(ox, oy, s) {
 function drawCharacters(ox, oy, s) {
   const groups = new Map();
   for (const c of characters) {
+    if (landOf(c.x, c.y) !== land) continue;
     const k = `${c.x},${c.y}`;
     if (!groups.has(k)) groups.set(k, []);
     groups.get(k).push(c);
@@ -419,7 +436,9 @@ function renderCharacters() {
     onclick: () => select({ type: 'char', id: c.slot }, true),
   },
   el('span', { class: 'who' }, el('b', {}, c.name || `Player ${c.slot}`), el('span', { class: 'sub' }, `${c.x}, ${c.y}`)),
-  el('span', { class: 'stats' }, `Level ${c.level} ${c.sex} ${c.race} ${c.class} · ${whereText(c.x, c.y)}`))));
+  el('span', { class: 'stats' }, `Level ${c.level} ${c.sex} ${c.race} ${c.class}`),
+  el('span', { class: 'stats' }, `${landName(landOf(c.x, c.y))} · ${whereText(c.x, c.y)}`))));
+  renderRealm();
 }
 
 function renderPlaces() {
@@ -585,9 +604,14 @@ function setupInput() {
     if (e.key === '+' || e.key === '=') zoomAt(...center(), 1.5);
     else if (e.key === '-') zoomAt(...center(), 1 / 1.5);
     else if (e.key === '0') fit();
+    else if (e.key >= '1' && e.key <= '4') setLand(+e.key - 1);
     else if (e.key === 'Escape') select(null);
     else if (e.key === '/') { e.preventDefault(); $('#search').focus(); }
   });
+
+  $('#realm-tabs').replaceChildren(...LANDS.map((name, i) => el('button', {
+    'data-land': i, onclick: () => setLand(i),
+  }, name.replace(/^of (the )?/, ''), el('span', { class: 'who' }))));
 
   $('#search').addEventListener('input', renderPlaces);
   $('#search').addEventListener('keydown', (e) => {
@@ -648,7 +672,7 @@ function updateHover(mx, my) {
   hover = t;
   const tip = $('#tooltip');
   if (!t) { tip.hidden = true; $('#cursor-pos').innerHTML = '&nbsp;'; canvas.classList.remove('over-place'); return; }
-  $('#cursor-pos').textContent = `${t.x}, ${t.y} · ${TERRAIN[terrainAt(t.x, t.y)]} · ${landName(landOf(t.x, t.y))}`;
+  $('#cursor-pos').textContent = `${t.x}, ${t.y} · ${TERRAIN[terrainAt(t.x, t.y)]}`;
   const hit = hitTest(mx, my);
   canvas.classList.toggle('over-place', !!hit);
   if (!hit) { tip.hidden = true; return; }
@@ -662,7 +686,7 @@ function updateHover(mx, my) {
       el('span', { class: 'dim' }, `Level ${c.level} ${c.race} ${c.class} · last save`));
   }
   tip.hidden = false;
-  const wrap = $('#map-wrap').getBoundingClientRect();
+  const wrap = $('#map-area').getBoundingClientRect();
   const left = Math.min(mx + 14, wrap.width - tip.offsetWidth - 6);
   tip.style.left = `${left}px`;
   tip.style.top = `${my + 16}px`;
@@ -684,8 +708,10 @@ async function start() {
   setupInput();
   renderLayers();
   computeFit();
-  view = prefs.view || { cx: W / 2, cy: H / 2, s: fitScale };
+  land = prefs.land ?? 0;
+  view = prefs.views[land] ? { ...prefs.views[land] } : fitView();
   clampView();
+  renderRealm();
   requestDraw();
 
   try {
@@ -708,6 +734,8 @@ async function start() {
   }
   renderPlaces(); renderInspector();
   await loadCharacters();
+  // first visit: open on the land your character is in
+  if (prefs.land === null && characters.length) setLand(landOf(characters[0].x, characters[0].y));
   requestDraw();
 
   // keep the server alive while the page is open

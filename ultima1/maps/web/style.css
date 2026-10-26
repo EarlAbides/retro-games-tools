@@ -28,7 +28,22 @@ button, input, textarea { font: inherit; color: inherit; }
 
 /* ------------------------------------------------------------ map */
 
-#map-wrap { position: relative; flex: 1; min-width: 0; background: #000; }
+#map-wrap { flex: 1; min-width: 0; display: flex; flex-direction: column; background: #000; }
+#map-area { position: relative; flex: 1; min-height: 0; }
+
+#realm-bar {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 16px;
+  padding: 8px 14px; background: var(--ui-bg); border-bottom: 1px solid var(--ui-line);
+}
+#realm-title {
+  margin: 0; font: italic 700 24px "Palatino Linotype", "Book Antiqua", Palatino, serif;
+  color: var(--parchment); text-transform: none; letter-spacing: 0.01em;
+}
+#realm-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+#realm-tabs button { font-size: 13px; padding: 3px 10px; color: var(--ui-dim); }
+#realm-tabs button.current { color: var(--ui-text); border-color: var(--ui-accent); background: #3a2f22; }
+#realm-tabs .who { color: var(--char); margin-left: 4px; font-size: 10px; vertical-align: 1px; }
+#realm-tabs .who:empty { display: none; }
 #map { display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; }
 #map.dragging { cursor: grabbing; }
 #map.over-place { cursor: pointer; }

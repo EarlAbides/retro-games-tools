@@ -9,18 +9,24 @@
 </head>
 <body>
   <main id="map-wrap">
-    <canvas id="map" aria-label="Ultima 1 overworld map"></canvas>
-    <div id="tooltip" hidden></div>
-    <div id="zoom-controls">
-      <button id="zoom-in" title="Zoom in (+)">+</button>
-      <button id="zoom-out" title="Zoom out (-)">&minus;</button>
-      <button id="zoom-fit" title="Fit map (0)">&#x2922;</button>
+    <header id="realm-bar">
+      <h2 id="realm-title"></h2>
+      <nav id="realm-tabs" aria-label="Lands (keys 1-4)"></nav>
+    </header>
+    <div id="map-area">
+      <canvas id="map" aria-label="Ultima 1 overworld map"></canvas>
+      <div id="tooltip" hidden></div>
+      <div id="zoom-controls">
+        <button id="zoom-in" title="Zoom in (+)">+</button>
+        <button id="zoom-out" title="Zoom out (-)">&minus;</button>
+        <button id="zoom-fit" title="Fit land (0)">&#x2922;</button>
+      </div>
+      <div id="statusbar">
+        <span id="cursor-pos">&nbsp;</span>
+        <span id="save-status"></span>
+      </div>
+      <div id="load-error" hidden></div>
     </div>
-    <div id="statusbar">
-      <span id="cursor-pos">&nbsp;</span>
-      <span id="save-status"></span>
-    </div>
-    <div id="load-error" hidden></div>
   </main>
 
   <aside id="sidebar">

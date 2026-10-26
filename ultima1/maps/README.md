@@ -6,18 +6,22 @@ Double-click **`Ultima 1 Map.bat`**. It starts a small local web server (PowerSh
 nothing to install) and opens the map at <http://localhost:8643/>. The server quits on
 its own a few minutes after you close the map tab.
 
+- One land at a time, its name at the top. Switch with the tabs or keys `1`-`4`. A
+  yellow dot on a tab means one of your characters is there. It opens on your
+  character's land, and each land remembers where you left it.
 - Drag to move, scroll to zoom (or `+` / `-` / `0` to fit). Zoomed out it's a clean
   terrain map. Zoom in and it switches to the game's own tiles.
 - All 84 places are labeled with their names from the game: 32 towns, 8 castles,
-  8 landmarks and signposts, and 36 dungeons. Find one with the search box (`/`).
+  8 landmarks and signposts, and 36 dungeons. Find one with the search box (`/`);
+  picking a place in another land switches to it.
 - **Your characters** show where each save left them, with a yellow flag. The list
-  says how far they are from the nearest place. It rereads the saves when you come
+  says which land they're in and how far they are from the nearest place. It rereads the saves when you come
   back to the tab, or click **Refresh**.
 - Click a place to see which land it's in, mark it **visited** (it gets a green box
   on the map), and keep notes. Towns and castles show their **layout**; click it to
   enlarge. The 32 towns share 8 layouts and the 8 castles share 2, and it lists
   which other places share the one you're looking at.
-- Every label type, the land borders and a tile grid can be turned on and off.
+- Every label type and a tile grid can be turned on and off.
 
 Notes are saved as you type to `map-notes.json` next to the script (the previous
 version is kept as `.bak`). That file is gitignored. Use **Export notes** for a backup.
