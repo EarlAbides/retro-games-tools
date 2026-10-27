@@ -46,6 +46,8 @@ const ctx = canvas.getContext('2d');
 
 let places = [], byPos = new Map(), terrain, world, overview, townTiles, tcd;
 let characters = [];
+let dungeonSpots = [];
+let dungeonView = { place: null, level: 1, slot: null, route: true };
 let notes = emptyNotes();
 let prefs = loadPrefs();
 let land = 0;                                 // the land on screen
@@ -172,6 +174,175 @@ function drawLayout(target, layout) {
       if (v >= townTiles.length) v = 1;                 // shop zone marker: plain floor
       g.drawImage(townTiles[v], x * TOWN_TILE, y * TOWN_TILE);
     }
+  }
+}
+
+// ------------------------------------------------------------ dungeons
+
+// Dungeons aren't stored anywhere. OUT.EXE builds each level as you arrive (code 0x4761) from a
+// random seed made of the dungeon's map position, the level, and a number fixed when the character
+// was made (save offset 0x32): x*5 + y*3 + level*17 + that number (code 0x45C8). So a dungeon is the
+// same on every visit, but each character has their own. Monsters, chests and coffins are placed
+// after the game reseeds from the clock, so they change on each visit and aren't shown.
+const DUN = 11, DUN_LEVELS = 10;
+const OPEN = 0, WALL = 1, SECRET = 2, DOOR = 3, DOWN = 6, UP = 7, FIELD = 8;
+const BLOCKS = new Set([WALL, SECRET, FIELD]);     // what stops you walking (code 0x3F7F)
+
+// The game's random numbers (code 0xB4C3): add 0x9248, rotate right by 3, keep 10 bits,
+// then bring into lo..hi by repeated subtraction rather than a true remainder.
+function dungeonRandom(seed) {
+  let s = seed & 0xffff;
+  return (lo, hi) => {
+    s = (s + 0x9248) & 0xffff;
+    s = ((s >>> 3) | (s << 13)) & 0xffff;
+    let v = s & 0x3ff;
+    const span = Math.min(hi, 255) - lo;
+    while (v > span) v -= span;
+    return (v + lo) & 0xff;
+  };
+}
+
+// One level as DUN*DUN cell types, indexed [y * DUN + x]: x across and y down, with the entrance
+// in the top-left corner.
+function buildDungeonLevel(place, level, seed) {
+  const g = new Uint8Array(DUN * DUN);
+  const set = (x, y, v) => { g[y * DUN + x] = v; };
+  for (let i = 0; i < DUN; i++) { set(i, 0, WALL); set(0, i, WALL); set(i, DUN - 1, WALL); set(DUN - 1, i, WALL); }
+  const rnd = dungeonRandom(place.x * 5 + place.y * 3 + level * 17 + seed);
+  for (const x of [2, 4, 6, 8]) {
+    for (let y = 1; y <= 9; y++) set(x, y, rnd(1, 4) - 1);        // open, wall, secret door or door
+  }
+  for (let k = 0; k <= 2 * level; k++) {
+    const v = rnd(1, 255) > 160 ? FIELD : WALL;
+    const spot = dungeonSpots[rnd(1, 16) - 1];
+    if (level % 2) set(spot.x, spot.y, v); else set(spot.y, spot.x, v);
+  }
+  // ladders: you come down onto an up ladder where the level above had its down ladder
+  set(7, 3, level % 2 ? UP : DOWN);
+  set(3, 7, level % 2 ? DOWN : UP);
+  if (level === DUN_LEVELS) set(7, 3, OPEN);
+  if (level === 1) { set(1, 1, UP); set(7, 3, OPEN); }
+  return g;
+}
+
+// Where you arrive on a level, and the ladder down from it.
+function dungeonArrival(level) {
+  if (level === 1) return { x: 1, y: 1 };
+  return level % 2 ? { x: 7, y: 3 } : { x: 3, y: 7 };
+}
+function dungeonExit(level) {
+  if (level === DUN_LEVELS) return null;
+  return level % 2 ? { x: 3, y: 7 } : { x: 7, y: 3 };
+}
+
+// Shortest walk between two cells. Secret doors count as passable but cost more, so the route only
+// goes through one when there's no other way. You can't step from a door straight onto another door.
+function dungeonRoute(g, from, to) {
+  const at = (x, y) => g[y * DUN + x];
+  const dist = new Array(DUN * DUN).fill(Infinity), prev = new Array(DUN * DUN).fill(-1);
+  const start = from.y * DUN + from.x, goal = to.y * DUN + to.x;
+  dist[start] = 0;
+  const queue = [start];
+  while (queue.length) {
+    queue.sort((a, b) => dist[a] - dist[b]);
+    const i = queue.shift();
+    if (i === goal) break;
+    const x = i % DUN, y = Math.floor(i / DUN);
+    for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) {
+      const nx = x + dx, ny = y + dy, t = at(nx, ny);
+      if (t === WALL || t === FIELD || (t === DOOR && at(x, y) === DOOR)) continue;
+      const d = dist[i] + (t === SECRET ? 20 : 1);
+      const j = ny * DUN + nx;
+      if (d < dist[j]) { dist[j] = d; prev[j] = i; queue.push(j); }
+    }
+  }
+  if (dist[goal] === Infinity) return null;
+  const path = [];
+  for (let i = goal; i !== -1; i = prev[i]) path.unshift({ x: i % DUN, y: Math.floor(i / DUN) });
+  return path;
+}
+
+// Draw a level at `cell` px per cell (times the screen's pixel ratio for sharpness).
+function drawDungeon(target, g, level, { cell = 40, route = null } = {}) {
+  const dpr = window.devicePixelRatio || 1;
+  const px = DUN * cell;
+  target.width = target.height = Math.round(px * dpr);
+  target.style.width = target.style.height = `${px}px`;
+  const c = target.getContext('2d');
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  c.fillStyle = '#17130e';
+  c.fillRect(0, 0, px, px);
+  const glyph = (text, x, y, color, size = 0.62) => {
+    c.font = `700 ${Math.round(cell * size)}px "Segoe UI", system-ui, sans-serif`;
+    c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillStyle = color;
+    c.fillText(text, (x + 0.5) * cell, (y + 0.54) * cell);
+  };
+
+  for (let y = 0; y < DUN; y++) {
+    for (let x = 0; x < DUN; x++) {
+      const t = g[y * DUN + x], x0 = x * cell, y0 = y * cell;
+      if (t === WALL || t === SECRET) {
+        c.fillStyle = '#6e665a';
+        c.fillRect(x0, y0, cell, cell);
+        c.fillStyle = '#857c6e';
+        c.fillRect(x0, y0, cell, 3);
+        if (t === SECRET) {
+          c.strokeStyle = '#ffd23f'; c.lineWidth = 2; c.setLineDash([4, 3]);
+          c.strokeRect(x0 + cell * 0.2, y0 + cell * 0.12, cell * 0.6, cell * 0.8);
+          c.setLineDash([]);
+          glyph('S', x, y, '#ffd23f', 0.42);
+        }
+      } else if (t === DOOR) {
+        c.fillStyle = '#7a4a1e';
+        c.fillRect(x0 + cell * 0.18, y0 + cell * 0.08, cell * 0.64, cell * 0.84);
+        c.strokeStyle = '#c98a45'; c.lineWidth = 2;
+        c.strokeRect(x0 + cell * 0.18, y0 + cell * 0.08, cell * 0.64, cell * 0.84);
+        c.fillStyle = '#f0c070';
+        c.beginPath(); c.arc(x0 + cell * 0.68, y0 + cell * 0.52, cell * 0.05, 0, Math.PI * 2); c.fill();
+      } else if (t === FIELD) {
+        // the game draws a force field as three lines across the passage
+        c.strokeStyle = '#55ffff'; c.lineWidth = 2;
+        c.beginPath();
+        for (const k of [0.3, 0.5, 0.7]) { c.moveTo(x0 + 3, y0 + cell * k); c.lineTo(x0 + cell - 3, y0 + cell * k); }
+        c.stroke();
+      } else if (t === UP) {
+        glyph('▲', x, y, '#7dff7d');
+      } else if (t === DOWN) {
+        glyph('▼', x, y, '#ff8a5c');
+      }
+    }
+  }
+
+  // faint grid over the open floor
+  c.strokeStyle = 'rgba(255,255,255,0.06)'; c.lineWidth = 1;
+  c.beginPath();
+  for (let i = 1; i < DUN; i++) {
+    c.moveTo(i * cell + 0.5, 0); c.lineTo(i * cell + 0.5, px);
+    c.moveTo(0, i * cell + 0.5); c.lineTo(px, i * cell + 0.5);
+  }
+  c.stroke();
+
+  if (route && route.length > 1) {
+    c.strokeStyle = 'rgba(255,210,63,0.85)'; c.lineWidth = Math.max(2, cell * 0.08);
+    c.lineJoin = 'round'; c.lineCap = 'round'; c.setLineDash([cell * 0.15, cell * 0.15]);
+    c.beginPath();
+    route.forEach((p, i) => c[i ? 'lineTo' : 'moveTo']((p.x + 0.5) * cell, (p.y + 0.5) * cell));
+    c.stroke();
+    c.setLineDash([]);
+  }
+
+  // where you arrive, facing down the map when you come in from outside
+  const a = dungeonArrival(level);
+  c.strokeStyle = '#ffd23f'; c.lineWidth = 2;
+  c.strokeRect(a.x * cell + 2, a.y * cell + 2, cell - 4, cell - 4);
+  if (level === 1) {
+    c.fillStyle = '#ffd23f';
+    c.beginPath();
+    c.moveTo((a.x + 0.3) * cell, (a.y + 0.86) * cell);
+    c.lineTo((a.x + 0.7) * cell, (a.y + 0.86) * cell);
+    c.lineTo((a.x + 0.5) * cell, (a.y + 1.06) * cell);
+    c.fill();
   }
 }
 
@@ -498,6 +669,19 @@ function renderInspector() {
     const shared = places.filter((o) => o.layout === p.layout && o.id !== p.id).map((o) => o.name);
     parts.push(c, el('p', { class: 'hint' }, `Same layout as ${shared.join(', ')}.`));
   }
+  if (p.kind === 'dungeon') {
+    const ch = dungeonCharacter();
+    if (ch) {
+      const c = el('canvas', { class: 'dungeon', title: 'Click for all 10 levels', onclick: () => openDungeon(p) });
+      const g = buildDungeonLevel(p, 1, ch.seed);
+      drawDungeon(c, g, 1, { cell: 24, route: dungeonRoute(g, dungeonArrival(1), dungeonExit(1)) });
+      parts.push(c,
+        el('p', { class: 'hint' }, `Level 1 as ${ch.name || `Player ${ch.slot}`} will find it.`),
+        el('button', { onclick: () => openDungeon(p) }, 'All 10 levels'));
+    } else {
+      parts.push(el('p', { class: 'hint' }, 'Each character gets their own dungeon layouts. Save a character to see them.'));
+    }
+  }
   parts.push(el('textarea', {
     rows: 5, placeholder: 'Notes: quests, shops, what you found...', value: n.note || '',
     oninput: (e) => { placeNote(p.id, true).note = e.target.value; prune(p.id); notesChanged(); },
@@ -512,6 +696,57 @@ function openLayout(p) {
   const k = Math.max(1, Math.floor(Math.min(window.innerWidth * 0.9 / c.width, window.innerHeight * 0.75 / c.height)));
   c.style.width = `${c.width * k}px`;
   $('#layout-dialog').showModal();
+}
+
+// The character whose dungeons are shown: the one picked in the dungeon window, else the
+// selected one, else the first.
+function dungeonCharacter() {
+  return findChar(dungeonView.slot)
+    || (selection && selection.type === 'char' && findChar(selection.id))
+    || characters[0] || null;
+}
+
+function openDungeon(p) {
+  if (dungeonView.place !== p.id) dungeonView.level = 1;
+  dungeonView.place = p.id;
+  renderDungeon();
+  $('#dungeon-dialog').showModal();
+}
+
+function renderDungeon() {
+  const p = findPlace(dungeonView.place), ch = dungeonCharacter();
+  if (!p || !ch) { $('#dungeon-dialog').close(); return; }
+  const level = dungeonView.level;
+  $('#dungeon-title').textContent = p.name;
+
+  const who = $('#dungeon-char');
+  who.replaceChildren(...characters.map((c) => el('option', { value: c.slot, selected: c.slot === ch.slot }, c.name || `Player ${c.slot}`)));
+  who.hidden = characters.length < 2;
+  $('#dungeon-for').textContent = characters.length < 2 ? `as ${ch.name || `Player ${ch.slot}`} will find it` : 'as found by';
+
+  $('#dungeon-levels').replaceChildren(...Array.from({ length: DUN_LEVELS }, (_, i) => el('button', {
+    class: i + 1 === level ? 'current' : '', title: `Level ${i + 1} (key ${(i + 1) % 10})`,
+    onclick: () => { dungeonView.level = i + 1; renderDungeon(); },
+  }, String(i + 1))));
+
+  const g = buildDungeonLevel(p, level, ch.seed);
+  const from = dungeonArrival(level), to = dungeonExit(level);
+  const route = to && dungeonRoute(g, from, to);
+  const cell = Math.max(24, Math.min(52, Math.floor(Math.min(window.innerWidth - 340, window.innerHeight - 200) / DUN)));
+  drawDungeon($('#dungeon-big'), g, level, { cell, route: dungeonView.route ? route : null });
+
+  const secrets = route ? route.filter((c) => g[c.y * DUN + c.x] === SECRET).length : 0;
+  let text;
+  if (!to) text = 'The bottom level: no ladder down.';
+  else if (!route) text = 'No way through to the ladder down: force fields or walls block it. A Ladder Down spell gets you past.';
+  else {
+    text = `${route.length - 1} steps from where you arrive to the ladder down.`;
+    if (secrets) text += ` The route goes through ${secrets === 1 ? 'a secret door' : `${secrets} secret doors`}: face it and press I to find it.`;
+  }
+  $('#dungeon-route').textContent = text;
+  $('#dungeon-arrive').textContent = level === 1
+    ? 'You come in at the top-left corner, facing down the map. The ladder up there is the way out.'
+    : `You arrive on the ladder up (yellow box), climbing down from level ${level - 1}.`;
 }
 
 function prune(id) {
@@ -597,6 +832,16 @@ function setupInput() {
   $('#zoom-fit').onclick = fit;
 
   document.addEventListener('keydown', (e) => {
+    if ($('#dungeon-dialog').open) {
+      const lv = dungeonView.level;
+      if (e.key >= '0' && e.key <= '9') dungeonView.level = +e.key || 10;
+      else if (e.key === 'ArrowLeft' || e.key === 'PageUp') dungeonView.level = Math.max(1, lv - 1);
+      else if (e.key === 'ArrowRight' || e.key === 'PageDown') dungeonView.level = Math.min(DUN_LEVELS, lv + 1);
+      else return;
+      e.preventDefault();
+      renderDungeon();
+      return;
+    }
     if (e.target.matches('input, textarea')) {
       if (e.key === 'Escape') e.target.blur();
       return;
@@ -625,6 +870,11 @@ function setupInput() {
   $('#refresh-chars').onclick = loadCharacters;
   $('#layout-close').onclick = () => $('#layout-dialog').close();
   $('#layout-dialog').addEventListener('click', (e) => { if (e.target === e.currentTarget) e.currentTarget.close(); });
+  $('#dungeon-close').onclick = () => $('#dungeon-dialog').close();
+  $('#dungeon-dialog').addEventListener('click', (e) => { if (e.target === e.currentTarget) e.currentTarget.close(); });
+  $('#dungeon-char').addEventListener('change', (e) => { dungeonView.slot = +e.target.value; renderDungeon(); renderInspector(); });
+  $('#dungeon-show-route').checked = dungeonView.route;
+  $('#dungeon-show-route').addEventListener('change', (e) => { dungeonView.route = e.target.checked; renderDungeon(); });
 
   $('#export').onclick = () => {
     const a = el('a', {
@@ -701,6 +951,7 @@ async function loadCharacters() {
     characters = (await r.json()).filter((c) => c.x < W && c.y < H);
     if (selection && selection.type === 'char' && !findChar(selection.id)) selection = null;
     renderCharacters(); renderInspector(); requestDraw();
+    if ($('#dungeon-dialog').open) renderDungeon();
   } catch { /* server gone; the ping will say so */ }
 }
 
@@ -715,11 +966,13 @@ async function start() {
   requestDraw();
 
   try {
-    const [map, wt, tt, t, pl, nt] = await Promise.all([
+    const json = (url) => fetch(url).then((r) => { if (!r.ok) return r.text().then((m) => { throw new Error(m); }); return r.json(); });
+    const [map, wt, tt, t, pl, ds, nt] = await Promise.all([
       fetchBytes('MAP.BIN'), fetchBytes('EGATILES.BIN'), fetchBytes('EGATOWN.BIN'), fetchBytes('TCD.BIN'),
-      fetch('/api/places').then((r) => { if (!r.ok) return r.text().then((m) => { throw new Error(m); }); return r.json(); }),
+      json('/api/places'), json('/api/dungeon-spots'),
       fetch('/api/notes').then((r) => r.json()),
     ]);
+    dungeonSpots = ds;
     buildWorld(map, decodeTiles(wt, TILE));
     townTiles = decodeTiles(tt, TOWN_TILE);
     tcd = t;

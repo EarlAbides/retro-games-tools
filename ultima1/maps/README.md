@@ -21,6 +21,11 @@ its own a few minutes after you close the map tab.
   on the map), and keep notes. Towns and castles show their **layout**; click it to
   enlarge. The 32 towns share 8 layouts and the 8 castles share 2, and it lists
   which other places share the one you're looking at.
+- **Dungeons** show a map of level 1. Click it or **All 10 levels** for every level
+  (keys `1`-`9`, `0` for 10, arrows for next and previous). Each level shows its walls, doors,
+  secret doors, force fields and ladders, where you arrive, and the shortest way to the
+  ladder down. Each character gets their own dungeons. If you have more than one, pick
+  whose to show in the dungeon window.
 - Every label type and a tile grid can be turned on and off.
 
 Notes are saved as you type to `map-notes.json` next to the script (the previous
@@ -50,7 +55,8 @@ rendered from the player's own install. It finds the game the same way as the
 [save manager](../save-manager/) (`-GameDir`, `ULTIMA1_DIR`, then the GOG Galaxy paths).
 
 People and monsters aren't stored in the map files; the game places them when
-you enter. Dungeons aren't stored either.
+you enter. Dungeons aren't stored either. The game builds them as you go (see below), so
+only the interactive map shows them.
 
 ## File formats
 
@@ -74,3 +80,25 @@ you enter. Dungeons aren't stored either.
   `2*(y > 77) + (x > 83)` (code `0xB956`): 0 Lord British (NW), 1 the Feudal
   Lords (NE), 2 the Dark Unknown (SW), 3 Danger and Despair (SE). The map server
   checks every position against `MAP.BIN` before using it.
+- **Dungeons** aren't in any file. `OUT.EXE` builds each level when you arrive on it
+  (code `0x4761`; addresses here are offsets into the code, after the 0x200-byte header),
+  seeding its random numbers with `x*5 + y*3 + level*17 + s` (code `0x45C8`). x and y are
+  the dungeon's map position, and `s` is the word at save offset `0x32`, which is set when
+  the character is made and never changes. So a dungeon is the same on every visit, but
+  each character has their own. The generator (`random(lo, hi)` at `0xB4C3`: add `0x9248`,
+  rotate right 3, keep 10 bits, then subtract `hi - lo` until it fits) fills an 11 x 11 grid:
+  - a wall all round;
+  - columns x = 2, 4, 6, 8, rows 1-9: `random(1, 4) - 1`, so 0 open, 1 wall, 2 secret
+    door, 3 door. Odd columns stay open corridors;
+  - `2*level + 1` times: a force field (8) if `random(1, 255) > 160`, else a wall, on a spot
+    picked by `random(1, 16)` from a table of 16 positions, x at data `0x3820` and y at
+    `0x3840`. Even levels swap the x and y;
+  - ladders: odd levels have up (7) at 7,3 and down (6) at 3,7, even levels the other way
+    round. Level 1 has its up ladder (the way out) at 1,1, where you arrive facing +y.
+    Level 10 has no ladder down.
+
+  Then the game reseeds from the clock before placing monsters, chests and coffins, so those
+  change. You can't walk into walls, secret doors or force fields, or from one door
+  straight onto another (code `0x3F7F`). Inform and search (`I`) turns a secret door you
+  face into a door. There's no compass in the dungeon. Turning right goes from -x to -y,
+  so the map is drawn with x across and y down, which keeps left and right the same as in the game.

@@ -81,6 +81,20 @@ function Get-Places {
     }
 }
 
+function Get-DungeonSpots {
+    <# Dungeons aren't stored: OUT.EXE builds each level as you arrive (code 0x4761). Besides its
+       random walls and doors it puts a few walls or force fields on spots from a 16-entry table,
+       x at data offset 0x3820 and y at 0x3840 (swapped on even levels). The page needs that
+       table to build the same levels. #>
+    $exe = [IO.File]::ReadAllBytes((Join-Path $Root 'OUT.EXE'))
+    $xs = 0xD680 + 0x3820; $ys = 0xD680 + 0x3840
+    foreach ($i in 0..15) {
+        $x = [BitConverter]::ToInt16($exe, $xs + 2 * $i); $y = [BitConverter]::ToInt16($exe, $ys + 2 * $i)
+        if ($x -lt 1 -or $x -gt 9 -or $y -lt 1 -or $y -gt 9) { throw 'OUT.EXE is not the version this map knows.' }
+        [ordered]@{ x = $x; y = $y }
+    }
+}
+
 function Get-Characters {
     # Same record as the save manager reads (see ..\save-manager\README.md).
     $races = @('Human', 'Elf', 'Dwarf', 'Bobbit'); $classes = @('Fighter', 'Cleric', 'Wizard', 'Thief'); $sexes = @('Male', 'Female')
@@ -100,6 +114,7 @@ function Get-Characters {
             hits = & $w 0x16; coin = & $w 0x24; exp = & $w 0x26; food = & $w 0x28
             level = [math]::Floor((& $w 0x26) / 1000) + 1
             x = & $w 0x34; y = & $w 0x36
+            seed = & $w 0x32          # set when the character is made; seeds the dungeon levels
             saved = (Get-Item -LiteralPath $path).LastWriteTime.ToString('s')
         }
     }
@@ -135,6 +150,7 @@ function Invoke-Request([System.Net.HttpListenerContext]$Ctx) {
 
     if ($path -eq '/api/ping') { Send $Ctx 204; return }
     if ($path -eq '/api/places') { Send-Json $Ctx $Places; return }
+    if ($path -eq '/api/dungeon-spots') { Send-Json $Ctx $DungeonSpots; return }
     if ($path -eq '/api/characters') { Send-Json $Ctx @(Get-Characters); return }
     if ($path -match '^/api/game/([A-Z]+\.BIN)$' -and $GameFiles -contains $Matches[1]) {
         Send $Ctx 200 ([IO.File]::ReadAllBytes((Join-Path $Root $Matches[1]))) 'application/octet-stream'; return
@@ -167,14 +183,29 @@ function Invoke-Request([System.Net.HttpListenerContext]$Ctx) {
 }
 
 $Places = @(Get-Places)
+$DungeonSpots = @(Get-DungeonSpots)
 
 $listener = [System.Net.HttpListener]::new()
 $listener.Prefixes.Add($Url)
 try { $listener.Start() }
 catch {
-    # Most likely already running from an earlier launch - just show it.
-    if (-not $NoBrowser) { Start-Process $Url }
-    exit 0
+    # Most likely already running from an earlier launch. That one may be an older version of this
+    # script (it stays up while a map tab is open), so stop it and take over rather than reuse it.
+    $old = Get-CimInstance Win32_Process -Filter "ProcessId != $PID" |
+        Where-Object { $_.CommandLine -like '*MapServer.ps1*' }
+    $old | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+    $listener = [System.Net.HttpListener]::new()
+    $listener.Prefixes.Add($Url)
+    $started = $false
+    foreach ($try in 1..10) {
+        Start-Sleep -Milliseconds 300
+        try { $listener.Start(); $started = $true; break } catch { }
+    }
+    if (-not $started) {
+        # Something else holds the port - just show what's there.
+        if (-not $NoBrowser) { Start-Process $Url }
+        exit 0
+    }
 }
 Write-Host "Ultima 1 map at $Url  (game: $Root, notes: $NotesFile)"
 if (-not $NoBrowser) { Start-Process $Url }

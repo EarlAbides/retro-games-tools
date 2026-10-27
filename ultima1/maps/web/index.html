@@ -71,6 +71,35 @@
     <p class="hint">The game fills in shopkeepers, guards and townsfolk when you enter. Letters spell out the shop signs.</p>
   </dialog>
 
+  <dialog id="dungeon-dialog">
+    <header>
+      <h2 id="dungeon-title"></h2>
+      <span class="for"><span id="dungeon-for"></span> <select id="dungeon-char" title="Whose dungeon"></select></span>
+      <button id="dungeon-close" title="Close (Esc)">&times;</button>
+    </header>
+    <nav id="dungeon-levels" aria-label="Levels (keys 1-9, 0 for 10; arrows for next and previous)"></nav>
+    <div class="dungeon-body">
+      <canvas id="dungeon-big"></canvas>
+      <div class="dungeon-side">
+        <p id="dungeon-arrive"></p>
+        <p id="dungeon-route"></p>
+        <label class="check"><input id="dungeon-show-route" type="checkbox"> Show the route</label>
+        <ul class="legend">
+          <li><span class="sw wall"></span><span>Wall</span></li>
+          <li><span class="sw door"></span><span>Door</span></li>
+          <li><span class="sw secret">S</span><span>Secret door: looks like a wall. Face it and press <kbd>I</kbd> to find it</span></li>
+          <li><span class="sw field"></span><span>Force field: three lines across the passage. Can't be passed</span></li>
+          <li><span class="sw up">&#9650;</span><span>Ladder up</span></li>
+          <li><span class="sw down">&#9660;</span><span>Ladder down</span></li>
+          <li><span class="sw arrive"></span><span>Where you arrive</span></li>
+          <li><span class="sw route"></span><span>Shortest way to the ladder down</span></li>
+        </ul>
+        <p class="hint">Climb with <kbd>K</kbd>. Each ladder down lands you on the ladder up of the level below, in the same spot.
+          Monsters, chests and coffins change each visit, so they aren't shown. No compass in the game: the map is drawn with the entrance at the top left.</p>
+      </div>
+    </div>
+  </dialog>
+
   <script src="app.js"></script>
 </body>
 </html>
