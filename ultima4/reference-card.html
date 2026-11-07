@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ultima IV Reference Card</title>
+<style>
+  :root {
+    --paper: #f4ecd8;
+    --ink: #2b2118;
+    --muted: #6b5a45;
+    --rule: #b9a27a;
+    --accent: #8b1e1e;
+    --key-bg: #fffaf0;
+    --key-edge: #8a7553;
+    --panel: #ece1c6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #1d1813; --ink: #eadfc8; --muted: #b3a283; --rule: #5c4d38;
+      --accent: #e0765f; --key-bg: #2c251d; --key-edge: #8a7553; --panel: #26201a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #1d1813; --ink: #eadfc8; --muted: #b3a283; --rule: #5c4d38;
+    --accent: #e0765f; --key-bg: #2c251d; --key-edge: #8a7553; --panel: #26201a;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font: 14px/1.4 "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  }
+  .card { max-width: 1040px; margin: 0 auto; padding: 24px 16px 32px; }
+  .side + .side { margin-top: 26px; }
+
+  header { text-align: center; border-bottom: 3px double var(--rule); padding-bottom: 10px; margin-bottom: 14px; }
+  h1 { margin: 0; font-size: 30px; letter-spacing: .12em; font-variant: small-caps; color: var(--accent); }
+  .sub { margin: 2px 0 0; color: var(--muted); font-style: italic; }
+
+  .grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 18px; }
+  @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+
+  h2 {
+    margin: 0 0 6px; font-size: 15px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--accent); border-bottom: 1px solid var(--rule); padding-bottom: 2px;
+  }
+  section { margin-bottom: 14px; break-inside: avoid; }
+
+  kbd {
+    display: inline-block; min-width: 1.7em; padding: 0 .35em; text-align: center;
+    font: bold 13px/1.55 Consolas, "Courier New", monospace;
+    background: var(--key-bg); color: var(--ink);
+    border: 1px solid var(--key-edge); border-bottom-width: 3px; border-radius: 4px;
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+  td, th { padding: 2px 4px; vertical-align: top; text-align: left; }
+  th { font-size: 12px; font-weight: normal; font-style: italic; color: var(--muted); }
+  td.cmd { font-weight: bold; white-space: nowrap; }
+  td.note { color: var(--muted); }
+  tr + tr td { border-top: 1px dotted var(--rule); }
+  tr.star td.cmd { color: var(--accent); }
+  .commands td:first-child { width: 2.4em; }
+  .commands td.cmd { width: 7.5em; }
+
+  ol, ul { margin: 0; padding-left: 1.3em; }
+  li { margin: 2px 0; }
+  p { margin: 0; }
+  p + p { margin-top: 5px; }
+  .panel { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 8px 12px; }
+  dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; }
+  dt { font-weight: bold; }
+  dd { margin: 0; color: var(--muted); }
+  .moves { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; align-items: center; }
+  .words kbd { min-width: 0; font-weight: normal; }
+  .spells { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; }
+  .spells td:first-child { width: 2.4em; }
+  .mix { font: bold 13px Consolas, "Courier New", monospace; letter-spacing: .08em; white-space: nowrap; }
+  .mp { text-align: right; color: var(--muted); white-space: nowrap; }
+  .unknown { color: var(--muted); font-style: italic; }
+  .reagents { display: grid; grid-template-columns: repeat(4, auto); gap: 3px 10px; justify-content: space-between; }
+  .reagents span { white-space: nowrap; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; }
+  footer { margin-top: 6px; text-align: center; color: var(--muted); font-size: 12px; font-style: italic; }
+
+  @media print {
+    @page { size: letter; margin: 0.4in; }
+    :root, :root[data-theme], :root:not([data-theme="light"]) {
+      --paper: #fff; --ink: #000; --muted: #333; --rule: #999; --accent: #7a1010;
+      --key-bg: #fff; --key-edge: #555; --panel: #f3f3f3;
+    }
+    body { font-size: 11px; line-height: 1.3; }
+    .card { padding: 0; max-width: none; }
+    td, th { padding: 1px 3px; }
+    .side + .side { margin-top: 0; break-before: page; }
+    h1 { font-size: 24px; }
+    .grid { grid-template-columns: 1.15fr 1fr; gap: 14px; }
+    kbd { font-size: 11px; }
+    .spells kbd { line-height: 1.2; }
+    section { margin-bottom: 8px; }
+    header { padding-bottom: 6px; margin-bottom: 9px; }
+    footer { margin-top: 2px; font-size: 10px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+
+  <div class="side">
+    <header>
+      <h1>Ultima IV &middot; Quest of the Avatar</h1>
+      <p class="sub">Reference Card &mdash; The Road &mdash; PC edition (1985)</p>
+    </header>
+
+    <div class="grid">
+      <div>
+        <section>
+          <h2>Commands</h2>
+          <table class="commands">
+            <tr><td><kbd>A</kbd></td><td class="cmd">Attack</td><td class="note">with the readied weapon, then a direction</td></tr>
+            <tr><td><kbd>B</kbd></td><td class="cmd">Board</td><td class="note">a ship, or mount a horse</td></tr>
+            <tr class="star"><td><kbd>C</kbd></td><td class="cmd">Cast</td><td class="note">player, then spell letter; <b>mix it first</b></td></tr>
+            <tr><td><kbd>D</kbd></td><td class="cmd">Descend</td><td class="note">a ladder down</td></tr>
+            <tr><td><kbd>E</kbd></td><td class="cmd">Enter</td><td class="note">village, towne, castle, dungeon, shrine</td></tr>
+            <tr><td><kbd>F</kbd></td><td class="cmd">Fire</td><td class="note">a ship's cannons, then a direction: broadsides only</td></tr>
+            <tr><td><kbd>G</kbd></td><td class="cmd">Get chest</td><td class="note">pick the player with the best Dexterity: fewer traps</td></tr>
+            <tr><td><kbd>H</kbd></td><td class="cmd">Hole up</td><td class="note">camp to rest and recover; works only so often</td></tr>
+            <tr><td><kbd>I</kbd></td><td class="cmd">Ignite</td><td class="note">a torch, for dungeons; needs a torch</td></tr>
+            <tr><td><kbd>J</kbd></td><td class="cmd">Jimmy</td><td class="note">a sealed door, then a direction; needs a key</td></tr>
+            <tr><td><kbd>K</kbd></td><td class="cmd">Klimb</td><td class="note">a ladder up, or out of a dungeon's top level</td></tr>
+            <tr><td><kbd>L</kbd></td><td class="cmd">Locate</td><td class="note">your position; needs a sextant</td></tr>
+            <tr class="star"><td><kbd>M</kbd></td><td class="cmd">Mix</td><td class="note">spell, reagent letters, <kbd>Enter</kbd>; see the other side</td></tr>
+            <tr><td><kbd>N</kbd></td><td class="cmd">New order</td><td class="note">swap two players; you stay #1</td></tr>
+            <tr><td><kbd>O</kbd></td><td class="cmd">Open</td><td class="note">a door, then a direction</td></tr>
+            <tr><td><kbd>P</kbd></td><td class="cmd">Peer</td><td class="note">at a gem; needs a gem</td></tr>
+            <tr class="star"><td><kbd>Q</kbd></td><td class="cmd">Quit &amp; save</td><td class="note">saves; <b>outdoors or in a dungeon</b>, not in towns</td></tr>
+            <tr class="star"><td><kbd>R</kbd></td><td class="cmd">Ready</td><td class="note">a weapon, per player: buying isn't enough!</td></tr>
+            <tr class="star"><td><kbd>S</kbd></td><td class="cmd">Search</td><td class="note">only your exact square, for unusual things</td></tr>
+            <tr class="star"><td><kbd>T</kbd></td><td class="cmd">Talk</td><td class="note">then a direction: <b>talk to everyone</b></td></tr>
+            <tr><td><kbd>U</kbd></td><td class="cmd">Use</td><td class="note">an item you found by Searching</td></tr>
+            <tr><td><kbd>V</kbd></td><td class="cmd">Volume</td><td class="note">sound effects on / off</td></tr>
+            <tr class="star"><td><kbd>W</kbd></td><td class="cmd">Wear</td><td class="note">armour, per player</td></tr>
+            <tr><td><kbd>X</kbd></td><td class="cmd">X-it</td><td class="note">leave a ship or horse, go on foot</td></tr>
+            <tr><td><kbd>Y</kbd></td><td class="cmd">Yell</td><td class="note">giddyup or whoa, to your horse</td></tr>
+            <tr class="star"><td><kbd>Z</kbd></td><td class="cmd">Ztats</td><td class="note">a player's number, or <kbd>0</kbd> for all belongings; <kbd>&larr;</kbd><kbd>&rarr;</kbd> to scroll</td></tr>
+            <tr><td><kbd>&#9251;</kbd></td><td class="cmd">Pass</td><td class="note">space bar: wait one turn</td></tr>
+          </table>
+        </section>
+
+        <section>
+          <h2>Moving</h2>
+          <div class="moves">
+            <span><kbd>&uarr;</kbd><kbd>&darr;</kbd><kbd>&larr;</kbd><kbd>&rarr;</kbd></span><span>Outdoors &amp; in towns: north / south / west / east</span>
+            <span><kbd>&uarr;</kbd><kbd>&darr;</kbd></span><span>In dungeons: advance / retreat</span>
+            <span><kbd>&larr;</kbd><kbd>&rarr;</kbd></span><span>In dungeons: turn left / right</span>
+          </div>
+        </section>
+      </div>
+
+      <div>
+        <section>
+          <h2>Thy first hours</h2>
+          <div class="panel">
+            <ol>
+              <li><b>Z</b> then <b>0</b>: see what you own.</li>
+              <li><b>T</b>alk to everyone in town, and <b>keep a journal</b>. The clues are in the talk.</li>
+              <li>Ask people to <b>Join</b>. You'll want all seven companions in the end.</li>
+              <li>Buy gear, then <b>R</b>eady and <b>W</b>ear it for each player.</li>
+              <li>Buy food before you leave. Carry torches below ground.</li>
+              <li><b>M</b>ix spells ahead of time. You can't cast without a mixture.</li>
+              <li><b>Q</b> to save, then back up in the save manager.</li>
+            </ol>
+          </div>
+        </section>
+
+        <section>
+          <h2>Talking</h2>
+          <p class="words"><kbd>Name</kbd> <kbd>Job</kbd> <kbd>Health</kbd> <kbd>Look</kbd> <kbd>Join</kbd> <kbd>Give</kbd> <kbd>Bye</kbd></p>
+          <p>Then ask about any word that catches your eye in their answers. Four letters is enough. Someone may know more once another person has told you what to ask, so go back.</p>
+          <p>People may ask you a question. <b>Answer honestly</b>: dishonesty is remembered.</p>
+        </section>
+
+        <section>
+          <h2>Walking the Path</h2>
+          <p>Honesty &middot; Compassion &middot; Valor &middot; Justice &middot; Sacrifice &middot; Honor &middot; Spirituality &middot; Humility</p>
+          <ul>
+            <li>Show generosity to the less fortunate: say <b>Give</b>.</li>
+            <li>Before you fight, ask: <i>is this foe truly evil?</i> If not, stand your ground and let it retreat.</li>
+            <li>Stray from the Path and your companions will desert you.</li>
+            <li>The Seer <b>Hawkwind</b>, in Lord British's castle, reads your progress. Heed him.</li>
+            <li>Each shrine answers a different <b>mantra</b>. Learn them from the people.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>Combat</h2>
+          <ul>
+            <li>North, east, south and west only. Each player acts in turn.</li>
+            <li>Hand weapons reach the next square, polearms reach over a companion, missiles cross the field.</li>
+            <li>Walk a player off the field to save them. Everyone off and the fight ends.</li>
+            <li>Hold a narrow pass: terrain is your friend.</li>
+            <li>Energy fields can only be cast next to the caster.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>The party window</h2>
+          <dl>
+            <dt>G P S D</dt><dd>Good, Poisoned, Asleep, Dead</dd>
+            <dt>Poison</dt><dd>only a Healer or the Cure spell clears it</dd>
+          </dl>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <div class="side">
+    <header>
+      <h1>Ultima IV &middot; Quest of the Avatar</h1>
+      <p class="sub">Reference Card &mdash; Magic &amp; Travel</p>
+    </header>
+
+    <section>
+      <h2>Reagents: the letters you press when mixing</h2>
+      <div class="reagents">
+        <span><kbd>A</kbd> Sulfurous Ash</span><span><kbd>B</kbd> Ginseng</span><span><kbd>C</kbd> Garlic</span><span><kbd>D</kbd> Spider Silk</span>
+        <span><kbd>E</kbd> Blood Moss</span><span><kbd>F</kbd> Black Pearl</span><span><kbd>G</kbd> Nightshade</span><span><kbd>H</kbd> Mandrake Root</span>
+      </div>
+    </section>
+
+    <section>
+      <h2>Spells: mixture and magic points</h2>
+      <div class="spells">
+        <table>
+          <tr><th></th><th>Spell</th><th>Mix</th><th class="mp">MP</th></tr>
+          <tr><td><kbd>A</kbd></td><td class="cmd">Awaken</td><td class="mix">B C</td><td class="mp">5</td></tr>
+          <tr><td><kbd>B</kbd></td><td class="cmd">Blink</td><td class="mix">D E</td><td class="mp">15</td></tr>
+          <tr><td><kbd>C</kbd></td><td class="cmd">Cure</td><td class="mix">B C</td><td class="mp">5</td></tr>
+          <tr><td><kbd>D</kbd></td><td class="cmd">Dispel</td><td class="mix">A C F</td><td class="mp">20</td></tr>
+          <tr><td><kbd>E</kbd></td><td class="cmd">Energy Field</td><td class="mix">A D F</td><td class="mp">10</td></tr>
+          <tr><td><kbd>F</kbd></td><td class="cmd">Fireball</td><td class="mix">A F</td><td class="mp">15</td></tr>
+          <tr><td><kbd>G</kbd></td><td class="cmd">Gate Travel</td><td class="unknown">a secret</td><td class="mp">40</td></tr>
+          <tr><td><kbd>H</kbd></td><td class="cmd">Heal</td><td class="mix">B D</td><td class="mp">10</td></tr>
+          <tr><td><kbd>I</kbd></td><td class="cmd">Iceball</td><td class="mix">F H</td><td class="mp">20</td></tr>
+          <tr><td><kbd>J</kbd></td><td class="cmd">Jinx</td><td class="mix">F G H</td><td class="mp">30</td></tr>
+          <tr><td><kbd>K</kbd></td><td class="cmd">Kill</td><td class="mix">F G</td><td class="mp">25</td></tr>
+          <tr><td><kbd>L</kbd></td><td class="cmd">Light</td><td class="mix">A</td><td class="mp">5</td></tr>
+          <tr><td><kbd>M</kbd></td><td class="cmd">Magic Missile</td><td class="mix">A F</td><td class="mp">5</td></tr>
+        </table>
+        <table>
+          <tr><th></th><th>Spell</th><th>Mix</th><th class="mp">MP</th></tr>
+          <tr><td><kbd>N</kbd></td><td class="cmd">Negate</td><td class="mix">A C H</td><td class="mp">20</td></tr>
+          <tr><td><kbd>O</kbd></td><td class="cmd">Open</td><td class="mix">A E</td><td class="mp">5</td></tr>
+          <tr><td><kbd>P</kbd></td><td class="cmd">Protection</td><td class="mix">A B C</td><td class="mp">15</td></tr>
+          <tr><td><kbd>Q</kbd></td><td class="cmd">Quickness</td><td class="mix">A B E</td><td class="mp">20</td></tr>
+          <tr><td><kbd>R</kbd></td><td class="cmd">Resurrect</td><td class="unknown">a secret</td><td class="mp">45</td></tr>
+          <tr><td><kbd>S</kbd></td><td class="cmd">Sleep</td><td class="mix">B D</td><td class="mp">15</td></tr>
+          <tr><td><kbd>T</kbd></td><td class="cmd">Tremor</td><td class="mix">A E H</td><td class="mp">30</td></tr>
+          <tr><td><kbd>U</kbd></td><td class="cmd">Undead</td><td class="unknown">a secret</td><td class="mp">15</td></tr>
+          <tr><td><kbd>V</kbd></td><td class="cmd">View</td><td class="mix">G H</td><td class="mp">15</td></tr>
+          <tr><td><kbd>W</kbd></td><td class="cmd">Wind Change</td><td class="mix">A E</td><td class="mp">10</td></tr>
+          <tr><td><kbd>X</kbd></td><td class="cmd">X-it</td><td class="mix">A D E</td><td class="mp">15</td></tr>
+          <tr><td><kbd>Y</kbd></td><td class="cmd">Y (Up)</td><td class="mix">D E</td><td class="mp">10</td></tr>
+          <tr><td><kbd>Z</kbd></td><td class="cmd">Z (Down)</td><td class="mix">D E</td><td class="mp">5</td></tr>
+        </table>
+      </div>
+      <p class="note" style="margin-top:5px">The Book of Mystic Wisdom keeps the three secrets to itself. Ask around. Y, Z and X-it work only underground; X-it takes you back to the entrance you came in by.</p>
+    </section>
+
+    <div class="grid">
+      <div>
+        <section>
+          <h2>The professions</h2>
+          <table>
+            <tr><th>Profession</th><th>Home</th><th>Prefers</th><th>Magic</th></tr>
+            <tr><td class="cmd">Mage</td><td>Moonglow</td><td class="note">Staff; cloth only</td><td class="mp">Full</td></tr>
+            <tr><td class="cmd">Bard</td><td>Britain</td><td class="note">Sling, crossbow; leather</td><td class="mp">&frac12;</td></tr>
+            <tr><td class="cmd">Fighter</td><td>Jhelom</td><td class="note">Sword; anything</td><td class="mp">None</td></tr>
+            <tr><td class="cmd">Druid</td><td>Yew</td><td class="note">Mace, bows; leather</td><td class="mp">&frac34;</td></tr>
+            <tr><td class="cmd">Tinker</td><td>Minoc</td><td class="note">Axe; non-magical armour</td><td class="mp">&frac14;</td></tr>
+            <tr><td class="cmd">Paladin</td><td>Trinsic</td><td class="note">Halberd; plate</td><td class="mp">&frac12;</td></tr>
+            <tr><td class="cmd">Ranger</td><td>Skara Brae</td><td class="note">Most weapons; leather</td><td class="mp">&frac12;</td></tr>
+            <tr><td class="cmd">Shepherd</td><td>&mdash;</td><td class="note">Unskilled, but humble</td><td class="mp">None</td></tr>
+          </table>
+          <p class="note" style="margin-top:5px">Magical strength is twice Intelligence, scaled by the profession's share above.</p>
+        </section>
+
+        <section>
+          <h2>Shops</h2>
+          <dl>
+            <dt>Weapons, Armoury</dt><dd>buy and trade in. Each town's range differs</dd>
+            <dt>Grocery</dt><dd>food. Don't let the party starve</dd>
+            <dt>Healer</dt><dd>wounds and poison</dd>
+            <dt>Inn</dt><dd>a night's rest. Prices vary</dd>
+            <dt>Herb shop</dt><dd>reagents, though not every one is sold</dd>
+            <dt>Pub</dt><dd>bartenders gossip, if asked the right thing at the right price</dd>
+            <dt>Guild</dt><dd>torches, gems, keys and sextants, if you can find it: somewhere out at sea, they say</dd>
+          </dl>
+        </section>
+      </div>
+
+      <div>
+        <section>
+          <h2>Terrain</h2>
+          <table>
+            <tr><td class="cmd">Grass</td><td class="note">full speed</td></tr>
+            <tr><td class="cmd">Brush</td><td class="note">three quarters speed</td></tr>
+            <tr><td class="cmd">Forest</td><td class="note">half speed; poor visibility</td></tr>
+            <tr><td class="cmd">Hills</td><td class="note">a snail's pace</td></tr>
+            <tr><td class="cmd">Marsh</td><td class="note">half speed, and its gases can poison you. Avoid</td></tr>
+            <tr><td class="cmd">Mountains</td><td class="note">impassable; poor visibility</td></tr>
+          </table>
+        </section>
+
+        <section>
+          <h2>The twin moons</h2>
+          <p>Moongates appear and vanish with the moons. <b>Trammel</b> tells which gate is active. Once you enter, <b>Felucca</b> tells where you'll come out.</p>
+          <p class="note">Each moon's cycle: New &rarr; Waxing Crescent &rarr; First Quarter &rarr; Waxing Gibbous &rarr; Full &rarr; Waning Gibbous &rarr; Last Quarter &rarr; Waning Crescent. They show at the top of the view.</p>
+        </section>
+
+        <section>
+          <h2>Finding your way</h2>
+          <p>A sextant reads each coordinate as two letters, latitude then longitude, and the map tool shows the same reading for any square. Horses speed travel on land. Ships fight with broadsides.</p>
+        </section>
+
+        <section>
+          <h2>The quest</h2>
+          <p>The Triad of Evil is long destroyed. Lord British seeks one who can become the <b>Avatar</b>, a shining example of the Eight Virtues. Many have grown enlightened in one or more, but none have reached the whole. The secrets lie in the hearts of the people and in the land.</p>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <footer>Compiled from the game's manual, without its hints section; spell costs from the game itself &middot; retro-games-tools</footer>
+</div>
+</body>
+</html>

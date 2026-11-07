@@ -16,3 +16,6 @@ ultima1/maps/out/
 
 # Ultima 1 map personal notes (kept locally; use Export in the app to back up)
 ultima1/maps/map-notes.json*
+
+# Ultima 4 map personal notes (kept locally; use Export in the app to back up)
+ultima4/maps/map-notes.json*

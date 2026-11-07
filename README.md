@@ -9,6 +9,7 @@ releases running under DOSBox.
 |------|-------|
 | [Starflight](starflight/) (1986) | [starmap](starflight/starmap/), [save-manager](starflight/save-manager/) |
 | [Ultima 1](ultima1/) (1986) | [save-manager](ultima1/save-manager/), [maps](ultima1/maps/), [reference card](ultima1/reference-card.html) |
+| [Ultima 4](ultima4/) (1985) | [save-manager](ultima4/save-manager/), [maps](ultima4/maps/), [reference card](ultima4/reference-card.html) |
 
 ## Reference material
 
