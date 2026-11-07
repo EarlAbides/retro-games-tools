@@ -36,7 +36,7 @@ $WebRoot = Join-Path $PSScriptRoot 'web'
 if (-not $NotesFile) { $NotesFile = Join-Path $PSScriptRoot 'map-notes.json' }
 $NotesFile = [IO.Path]::GetFullPath($NotesFile)
 $Url = "http://localhost:$Port/"
-$IdleLimit = [TimeSpan]::FromMinutes(3)   # page pings every 30s; background tabs may throttle to once a minute
+$IdleLimit = 180   # seconds awake with no request; page pings every 30s, background tabs may throttle to once a minute
 $GameFiles = @('MAP.BIN', 'EGATILES.BIN', 'EGATOWN.BIN', 'TCD.BIN')
 
 $Types = @{
@@ -192,7 +192,7 @@ catch {
     # Most likely already running from an earlier launch. That one may be an older version of this
     # script (it stays up while a map tab is open), so stop it and take over rather than reuse it.
     $old = Get-CimInstance Win32_Process -Filter "ProcessId != $PID" |
-        Where-Object { $_.CommandLine -like '*MapServer.ps1*' }
+        Where-Object { $_.CommandLine -and $_.CommandLine.IndexOf($PSCommandPath, [StringComparison]::OrdinalIgnoreCase) -ge 0 }
     $old | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
     $listener = [System.Net.HttpListener]::new()
     $listener.Prefixes.Add($Url)
@@ -210,15 +210,17 @@ catch {
 Write-Host "Ultima 1 map at $Url  (game: $Root, notes: $NotesFile)"
 if (-not $NoBrowser) { Start-Process $Url }
 
-$lastSeen = [DateTime]::Now
+$idle = 0
 try {
     while ($listener.IsListening) {
         $pending = $listener.BeginGetContext($null, $null)
         while (-not $pending.AsyncWaitHandle.WaitOne(1000)) {
-            if ([DateTime]::Now - $lastSeen -gt $IdleLimit) { Write-Host 'No map open - exiting.'; return }
+            # Counted in waits, not by the clock: when the PC wakes from sleep the clock has jumped
+            # hours ahead, and an open page hasn't had a chance to ping yet.
+            if (++$idle -ge $IdleLimit) { Write-Host 'No map open - exiting.'; return }
         }
         $ctx = $listener.EndGetContext($pending)
-        $lastSeen = [DateTime]::Now
+        $idle = 0
         try { Invoke-Request $ctx }
         catch {
             Write-Warning $_.Exception.Message

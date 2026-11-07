@@ -20,7 +20,7 @@ $WebRoot = Join-Path $PSScriptRoot 'web'
 if (-not $NotesFile) { $NotesFile = Join-Path $PSScriptRoot 'starmap-notes.json' }
 $NotesFile = [IO.Path]::GetFullPath($NotesFile)
 $Url = "http://localhost:$Port/"
-$IdleLimit = [TimeSpan]::FromMinutes(3)   # page pings every 30s; background tabs may throttle to once a minute
+$IdleLimit = 180   # seconds awake with no request; page pings every 30s, background tabs may throttle to once a minute
 
 $Types = @{
     '.html' = 'text/html; charset=utf-8'; '.js' = 'text/javascript; charset=utf-8'
@@ -88,15 +88,17 @@ catch {
 Write-Host "Star map at $Url  (notes: $NotesFile)"
 if (-not $NoBrowser) { Start-Process $Url }
 
-$lastSeen = [DateTime]::Now
+$idle = 0
 try {
     while ($listener.IsListening) {
         $pending = $listener.BeginGetContext($null, $null)
         while (-not $pending.AsyncWaitHandle.WaitOne(1000)) {
-            if ([DateTime]::Now - $lastSeen -gt $IdleLimit) { Write-Host 'No map open - exiting.'; return }
+            # Counted in waits, not by the clock: when the PC wakes from sleep the clock has jumped
+            # hours ahead, and an open page hasn't had a chance to ping yet.
+            if (++$idle -ge $IdleLimit) { Write-Host 'No map open - exiting.'; return }
         }
         $ctx = $listener.EndGetContext($pending)
-        $lastSeen = [DateTime]::Now
+        $idle = 0
         try { Invoke-Request $ctx }
         catch {
             Write-Warning $_.Exception.Message
